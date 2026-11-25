@@ -2,10 +2,9 @@
 import streamlit as st
 import pandas as pd
 
-# ==========================================
-# 한국체육대학교 실기 가이드 앱
-# 2027학년도 정시 일반 실기 기준
-# ==========================================
+# =====================================
+# 1. 기본 설정
+# =====================================
 
 st.set_page_config(
     page_title="한체대 실기 가이드",
@@ -13,173 +12,286 @@ st.set_page_config(
     layout="centered"
 )
 
-# ------------------------------------------
-# 1. 공식 점수 기준 데이터
-# ------------------------------------------
+st.title("🏃 한체대 체대입시 실기 가이드")
+st.caption("2027학년도 한국체육대학교 정시 일반 실기고사 기준")
+st.divider()
 
-SCORES = [38, 37, 35, 33, 31, 29, 27, 25, 23, 21, 19]
 
-# 시간 종목: 제한 시간 이하일수록 높은 점수
-# 거리 종목: 최소 기록 이상일수록 높은 점수
+# =====================================
+# 2. 공식 실기 점수 기준
+# =====================================
+
+# 형식: (점수, 최소 기록, 최대 기록)
+# 최대 기록이 None이면 해당 기록 이상을 의미
 
 STANDARD = {
     "남성": {
         "10m 왕복달리기": [
-            8.27, 8.45, 8.63, 8.81, 8.99,
-            9.18, 9.36, 9.54, 9.72, 9.90
+            (38, 0, 8.27),
+            (37, 8.28, 8.45),
+            (35, 8.46, 8.63),
+            (33, 8.64, 8.81),
+            (31, 8.82, 8.99),
+            (29, 9.00, 9.18),
+            (27, 9.19, 9.36),
+            (25, 9.37, 9.54),
+            (23, 9.55, 9.72),
+            (21, 9.73, 9.90),
+            (19, 9.91, None)
         ],
+
         "제자리멀리뛰기": [
-            284, 276, 269, 261, 253,
-            246, 238, 230, 223, 215
+            (38, 284, None),
+            (37, 276, 283),
+            (35, 269, 275),
+            (33, 261, 268),
+            (31, 253, 260),
+            (29, 246, 252),
+            (27, 238, 245),
+            (25, 230, 237),
+            (23, 223, 229),
+            (21, 215, 222),
+            (19, 0, 214)
         ],
+
         "메디신볼 던지기": [
-            12.4, 12.0, 11.6, 11.2, 10.8,
-            10.4, 10.0, 9.6, 9.2, 8.8
+            (38, 12.4, None),
+            (37, 12.0, 12.3),
+            (35, 11.6, 11.9),
+            (33, 11.2, 11.5),
+            (31, 10.8, 11.1),
+            (29, 10.4, 10.7),
+            (27, 10.0, 10.3),
+            (25, 9.6, 9.9),
+            (23, 9.2, 9.5),
+            (21, 8.8, 9.1),
+            (19, 0, 8.7)
         ]
     },
 
     "여성": {
         "10m 왕복달리기": [
-            9.19, 9.44, 9.70, 9.95, 10.21,
-            10.46, 10.72, 10.97, 11.23, 11.48
+            (38, 0, 9.19),
+            (37, 9.20, 9.44),
+            (35, 9.45, 9.70),
+            (33, 9.71, 9.95),
+            (31, 9.96, 10.21),
+            (29, 10.22, 10.46),
+            (27, 10.47, 10.72),
+            (25, 10.73, 10.97),
+            (23, 10.98, 11.23),
+            (21, 11.24, 11.48),
+            (19, 11.49, None)
         ],
+
         "제자리멀리뛰기": [
-            231, 222, 212, 203, 193,
-            184, 174, 165, 155, 146
+            (38, 231, None),
+            (37, 222, 230),
+            (35, 212, 221),
+            (33, 203, 211),
+            (31, 193, 202),
+            (29, 184, 192),
+            (27, 174, 183),
+            (25, 165, 173),
+            (23, 155, 164),
+            (21, 146, 154),
+            (19, 0, 145)
         ],
+
         "메디신볼 던지기": [
-            10.0, 9.7, 9.4, 9.1, 8.7,
-            8.4, 8.1, 7.8, 7.5, 7.1
+            (38, 10.0, None),
+            (37, 9.7, 9.9),
+            (35, 9.4, 9.6),
+            (33, 9.1, 9.3),
+            (31, 8.7, 9.0),
+            (29, 8.4, 8.6),
+            (27, 8.1, 8.3),
+            (25, 7.8, 8.0),
+            (23, 7.5, 7.7),
+            (21, 7.1, 7.4),
+            (19, 0, 7.0)
         ]
     }
 }
 
-EVENTS = list(STANDARD["남성"].keys())
+
+# =====================================
+# 3. 만점 기준
+# =====================================
+
+MAX_RECORD = {
+    "남성": {
+        "10m 왕복달리기": "8.27초 이하",
+        "제자리멀리뛰기": "284cm 이상",
+        "메디신볼 던지기": "12.4m 이상"
+    },
+
+    "여성": {
+        "10m 왕복달리기": "9.19초 이하",
+        "제자리멀리뛰기": "231cm 이상",
+        "메디신볼 던지기": "10.0m 이상"
+    }
+}
 
 
-# ------------------------------------------
-# 2. 보강운동 데이터
-# ------------------------------------------
+# =====================================
+# 4. 종목별 단위
+# =====================================
+
+UNITS = {
+    "10m 왕복달리기": "초",
+    "제자리멀리뛰기": "cm",
+    "메디신볼 던지기": "m"
+}
+
+
+# =====================================
+# 5. 점수 계산 함수
+# =====================================
+
+def calculate_score(event, record, gender):
+
+    score_table = STANDARD[gender][event]
+
+    for score, minimum, maximum in score_table:
+
+        if maximum is None:
+            if record >= minimum:
+                return score
+
+        elif minimum <= record <= maximum:
+            return score
+
+    return 19
+
+
+# =====================================
+# 6. 점수 기준표 만들기
+# =====================================
+
+def make_standard_table(event, gender):
+
+    rows = []
+
+    for score, minimum, maximum in STANDARD[gender][event]:
+
+        if event == "10m 왕복달리기":
+            if minimum == 0:
+                record_range = f"{maximum:.2f} 이하"
+            elif maximum is None:
+                record_range = f"{minimum:.2f} 이상"
+            else:
+                record_range = f"{minimum:.2f} ~ {maximum:.2f}"
+
+        elif event == "제자리멀리뛰기":
+            if maximum is None:
+                record_range = f"{minimum} 이상"
+            elif minimum == 0:
+                record_range = f"{maximum} 이하"
+            else:
+                record_range = f"{minimum} ~ {maximum}"
+
+        else:
+            if maximum is None:
+                record_range = f"{minimum:.1f} 이상"
+            elif minimum == 0:
+                record_range = f"{maximum:.1f} 미만"
+            else:
+                record_range = f"{minimum:.1f} ~ {maximum:.1f}"
+
+        rows.append({
+            "점수": score,
+            "기록 기준": record_range
+        })
+
+    return pd.DataFrame(rows)
+
+
+# =====================================
+# 7. 보강운동 데이터
+# =====================================
 
 EXERCISES = {
+
     "10m 왕복달리기": [
-        ["사이드 스텝", "10~15회", "2세트", "주 2회"],
-        ["방향전환 발놀림", "5회", "2세트", "주 2회"],
-        ["짧은 거리 가속 연습", "10m 3회", "2세트", "주 1~2회"]
+        {
+            "운동": "사이드 스텝",
+            "횟수": "좌우 8회",
+            "세트": "2세트",
+            "주기": "주 2회",
+            "목적": "좌우 이동 능력"
+        },
+        {
+            "운동": "방향 전환 연습",
+            "횟수": "짧은 구간 4회",
+            "세트": "2세트",
+            "주기": "주 1~2회",
+            "목적": "방향 전환 동작 익히기"
+        },
+        {
+            "운동": "가벼운 가속 달리기",
+            "횟수": "짧은 거리 3회",
+            "세트": "2세트",
+            "주기": "주 1~2회",
+            "목적": "출발과 가속 능력"
+        }
     ],
 
     "제자리멀리뛰기": [
-        ["스쿼트", "10회", "2세트", "주 2회"],
-        ["글루트 브릿지", "12회", "2세트", "주 2회"],
-        ["가벼운 점프 연습", "5회", "2세트", "주 1회"]
+        {
+            "운동": "스쿼트",
+            "횟수": "8~10회",
+            "세트": "2세트",
+            "주기": "주 2회",
+            "목적": "하체 근력"
+        },
+        {
+            "운동": "글루트 브릿지",
+            "횟수": "10회",
+            "세트": "2세트",
+            "주기": "주 2회",
+            "목적": "엉덩이 근육 강화"
+        },
+        {
+            "운동": "제자리 가벼운 점프",
+            "횟수": "5회",
+            "세트": "2세트",
+            "주기": "주 1회",
+            "목적": "착지와 점프 동작 익히기"
+        }
     ],
 
     "메디신볼 던지기": [
-        ["무릎 대고 푸시업", "8회", "2세트", "주 2회"],
-        ["밴드 로우", "12회", "2세트", "주 2회"],
-        ["가벼운 공 던지기 연습", "5회", "2세트", "주 1~2회"]
+        {
+            "운동": "무릎 대고 푸시업",
+            "횟수": "6~8회",
+            "세트": "2세트",
+            "주기": "주 2회",
+            "목적": "상체 근력"
+        },
+        {
+            "운동": "밴드 로우",
+            "횟수": "10회",
+            "세트": "2세트",
+            "주기": "주 2회",
+            "목적": "등과 어깨 주변 근육"
+        },
+        {
+            "운동": "가벼운 공 던지기",
+            "횟수": "5회",
+            "세트": "2세트",
+            "주기": "주 1회",
+            "목적": "던지는 동작 연습"
+        }
     ]
 }
 
 
-# ------------------------------------------
-# 3. 점수 계산 함수
-# ------------------------------------------
+# =====================================
+# 8. 성별 선택
+# =====================================
 
-def calculate_score(event, record, gender):
-
-    standards = STANDARD[gender][event]
-
-    if event == "10m 왕복달리기":
-
-        record = round(record, 2)
-
-        for i, standard in enumerate(standards):
-
-            if record <= standard:
-                return SCORES[i]
-
-        return 19
-
-    elif event == "제자리멀리뛰기":
-
-        record = int(record)
-
-        for i, standard in enumerate(standards):
-
-            if record >= standard:
-                return SCORES[i]
-
-        return 19
-
-    elif event == "메디신볼 던지기":
-
-        record = round(record, 1)
-
-        for i, standard in enumerate(standards):
-
-            if record >= standard:
-                return SCORES[i]
-
-        return 19
-
-
-# ------------------------------------------
-# 4. 보강운동 분석 함수
-# ------------------------------------------
-
-def analyze_weakness(results):
-
-    weak_events = []
-
-    for event, score in results.items():
-
-        # 29점 이하일 때 보강운동 권장
-        if score <= 29:
-            weak_events.append(event)
-
-    return weak_events
-
-
-# ------------------------------------------
-# 5. 결과 표 출력 함수
-# ------------------------------------------
-
-def show_exercises(weak_events):
-
-    if not weak_events:
-
-        st.success("현재 입력 기록에서는 보강운동이 권장되는 종목이 없습니다.")
-        return
-
-    st.subheader("💪 맞춤형 보강운동")
-
-    for event in weak_events:
-
-        st.markdown(f"### {event}")
-
-        df = pd.DataFrame(
-            EXERCISES[event],
-            columns=["보강운동", "횟수", "세트", "주기"]
-        )
-
-        st.dataframe(
-            df,
-            hide_index=True,
-            use_container_width=True
-        )
-
-
-# ==========================================
-# 6. 앱 화면
-# ==========================================
-
-st.title("🏃 한체대 실기 가이드")
-st.caption("한국체육대학교 2027학년도 정시 일반 실기 기준")
-
-st.divider()
-
-st.markdown("### ① 성별 선택")
+st.subheader("1️⃣ 성별 선택")
 
 gender = st.radio(
     "성별을 선택하세요.",
@@ -187,22 +299,53 @@ gender = st.radio(
     horizontal=True
 )
 
-st.divider()
 
-st.markdown("### ② 실기 종목 선택")
+# =====================================
+# 9. 실기 종목 선택
+# =====================================
 
-st.write("측정하고 싶은 종목만 선택하세요.")
+st.subheader("2️⃣ 실기 종목 선택")
+
+events = [
+    "10m 왕복달리기",
+    "제자리멀리뛰기",
+    "메디신볼 던지기"
+]
 
 selected_events = st.multiselect(
-    "실기 종목",
-    EVENTS,
-    default=EVENTS,
-    format_func=lambda x: x
+    "측정할 종목을 선택하세요. 여러 종목을 선택할 수 있습니다.",
+    events,
+    default=events
 )
 
-st.divider()
 
-st.markdown("### ③ 실기 기록 입력")
+# =====================================
+# 10. 만점 기준 안내
+# =====================================
+
+st.subheader("3️⃣ 종목별 만점 기준")
+
+max_rows = []
+
+for event in selected_events:
+    max_rows.append({
+        "실기 종목": event,
+        "만점 기록": MAX_RECORD[gender][event]
+    })
+
+if max_rows:
+    st.dataframe(
+        pd.DataFrame(max_rows),
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+# =====================================
+# 11. 기록 입력
+# =====================================
+
+st.subheader("4️⃣ 나의 실기 기록 입력")
 
 records = {}
 
@@ -214,181 +357,224 @@ if selected_events:
 
             st.markdown(f"**{event}**")
 
-            if event == "10m 왕복달리기":
+            standard_df = make_standard_table(event, gender)
 
+            st.dataframe(
+                standard_df,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            if event == "10m 왕복달리기":
                 records[event] = st.number_input(
                     "기록 (초)",
-                    min_value=0.01,
+                    min_value=0.0,
                     max_value=30.0,
                     value=10.0,
                     step=0.01,
-                    key="time"
+                    format="%.2f",
+                    key=f"time_{gender}"
                 )
 
             elif event == "제자리멀리뛰기":
-
                 records[event] = st.number_input(
                     "기록 (cm)",
-                    min_value=1,
+                    min_value=0,
                     max_value=500,
                     value=200,
                     step=1,
-                    key="jump"
+                    key=f"jump_{gender}"
                 )
 
             elif event == "메디신볼 던지기":
-
                 records[event] = st.number_input(
                     "기록 (m)",
-                    min_value=0.1,
+                    min_value=0.0,
                     max_value=30.0,
                     value=8.0,
                     step=0.1,
-                    key="ball"
+                    format="%.1f",
+                    key=f"ball_{gender}"
                 )
 
-        st.divider()
+            st.divider()
 
         submitted = st.form_submit_button(
-            "실기 점수 분석하기",
+            "실기 점수 계산하기",
             use_container_width=True
         )
 
 else:
-
+    st.info("먼저 실기 종목을 하나 이상 선택하세요.")
     submitted = False
-    st.info("최소 한 개 이상의 종목을 선택해주세요.")
 
 
-# ==========================================
-# 7. 결과 화면
-# ==========================================
+# =====================================
+# 12. 점수 계산 및 결과 출력
+# =====================================
 
 if submitted:
 
-    results = {}
+    results = []
 
-    for event, record in records.items():
-
-        results[event] = calculate_score(
-            event, record, gender
-        )
-
-    st.divider()
-
-    st.header("📊 실기 측정 결과")
-
-    result_data = []
-
-    for event, score in results.items():
+    for event in selected_events:
 
         record = records[event]
 
-        if event == "10m 왕복달리기":
-            record_text = f"{record:.2f}초"
+        score = calculate_score(
+            event,
+            record,
+            gender
+        )
 
-        elif event == "제자리멀리뛰기":
-            record_text = f"{record:.0f}cm"
-
-        else:
-            record_text = f"{record:.1f}m"
-
-        result_data.append({
-            "실기 종목": event,
-            "입력 기록": record_text,
-            "취득 점수": f"{score}점",
-            "만점": "38점"
+        results.append({
+            "종목": event,
+            "내 기록": f"{record} {UNITS[event]}",
+            "만점 기준": MAX_RECORD[gender][event],
+            "획득 점수": score
         })
 
-    result_df = pd.DataFrame(result_data)
+    st.session_state["results"] = results
+
+
+# =====================================
+# 13. 결과 분석
+# =====================================
+
+if "results" in st.session_state:
+
+    results = st.session_state["results"]
+
+    st.divider()
+    st.subheader("🏆 실기 측정 결과")
+
+    result_df = pd.DataFrame(results)
 
     st.dataframe(
         result_df,
-        hide_index=True,
-        use_container_width=True
+        use_container_width=True,
+        hide_index=True
     )
 
-    # --------------------------------------
-    # 8. 총점 계산
-    # --------------------------------------
+    total_score = sum(
+        item["획득 점수"] for item in results
+    )
 
-    total = sum(results.values())
+    max_score = 38 * len(results)
 
-    st.subheader("🏆 종합 점수")
+    average_score = total_score / len(results)
 
-    if len(results) == 3:
+    # 앱 자체 참고용 환산 점수
+    converted_score = (
+        (average_score - 19) / 19
+    ) * 100
 
-        converted = total / 114 * 100
+    converted_score = max(
+        0,
+        min(100, converted_score)
+    )
 
+    col1, col2 = st.columns(2)
+
+    with col1:
         st.metric(
-            "100점 환산 점수",
-            f"{converted:.2f}점"
+            "획득 점수 합계",
+            f"{total_score} / {max_score}점"
         )
 
-        st.progress(converted / 100)
-
-        st.write(f"공식 실기 취득 점수: {total} / 114점")
-
-    else:
-
-        average = total / (38 * len(results)) * 100
-
+    with col2:
         st.metric(
-            "선택 종목 평균 환산 점수",
-            f"{average:.2f}점"
+            "앱 자체 참고 환산",
+            f"{converted_score:.1f}점 / 100점"
         )
 
-        st.info(
-            "일부 종목만 선택했으므로 전체 실기 총점이 아닌 "
-            "선택 종목 평균 참고 점수입니다."
-        )
+    st.caption(
+        "100점 환산은 앱에서 비교하기 위한 참고용 계산입니다. "
+        "한국체육대학교의 실제 입시 총점이나 합격 가능성을 뜻하지 않습니다."
+    )
 
-    # --------------------------------------
-    # 9. 종목별 그래프
-    # --------------------------------------
+    # =================================
+    # 14. 종목별 점수 그래프
+    # =================================
 
-    st.subheader("📈 종목별 점수 그래프")
+    st.subheader("📊 종목별 점수 그래프")
 
     chart_df = pd.DataFrame({
-        "점수": results
+        "종목": [item["종목"] for item in results],
+        "점수": [item["획득 점수"] for item in results]
     })
 
-    st.bar_chart(chart_df)
+    st.bar_chart(
+        chart_df.set_index("종목")
+    )
 
-    # --------------------------------------
-    # 10. 보강운동 분석
-    # --------------------------------------
+    # =================================
+    # 15. 보강운동 분석
+    # =================================
 
     st.divider()
+    st.subheader("💪 보강운동 가이드")
 
-    st.header("💪 보강운동 분석")
+    weak_events = []
 
-    weak_events = analyze_weakness(results)
+    for item in results:
+
+        if item["획득 점수"] <= 29:
+            weak_events.append(item["종목"])
 
     if weak_events:
 
-        st.warning("보강운동이 권장되는 종목이 있습니다.")
+        st.warning(
+            "보강운동을 참고하면 좋은 종목이 있습니다."
+        )
+
+        exercise_rows = []
 
         for event in weak_events:
-            st.write(f"🔸 {event}")
+
+            for exercise in EXERCISES[event]:
+
+                exercise_rows.append({
+                    "부족한 종목": event,
+                    "보강운동": exercise["운동"],
+                    "횟수": exercise["횟수"],
+                    "세트": exercise["세트"],
+                    "주기": exercise["주기"],
+                    "운동 목적": exercise["목적"]
+                })
+
+        exercise_df = pd.DataFrame(exercise_rows)
+
+        st.dataframe(
+            exercise_df,
+            use_container_width=True,
+            hide_index=True
+        )
 
     else:
 
-        st.success("현재 입력 기록에서 보강운동 권장 종목이 없습니다.")
+        st.success(
+            "현재 입력한 기록에서는 29점 이하인 종목이 없습니다."
+        )
 
-    show_exercises(weak_events)
+    # =================================
+    # 16. 운동 안전 안내
+    # =================================
 
     st.divider()
 
+    st.subheader("⚠️ 운동할 때 주의할 점")
+
+    st.write("""
+    - 운동 전에는 가벼운 준비운동을 해주세요.
+    - 처음부터 무리한 횟수나 강도로 운동하지 마세요.
+    - 점프와 달리기는 충분한 휴식을 두고 진행하세요.
+    - 통증이나 어지러움이 생기면 운동을 중단하세요.
+    - 보강운동은 지도자와 상의해 본인에게 맞게 조절하세요.
+    """)
+
     st.caption(
-        "보강운동 권장 기준 29점 이하는 프로그램의 훈련용 기준이며 "
-        "대학의 공식 합격 기준이 아닙니다. "
-        "운동 강도는 개인 체력에 맞게 조절하세요."
+        "이 프로그램은 실기 기록을 바탕으로 점수와 보강운동을 "
+        "참고할 수 있도록 만든 학습용 앱입니다."
     )
 
-st.divider()
-
-st.caption(
-    "한국체육대학교 2027학년도 정시 일반 실기 참고 프로그램 | "
-    "실제 전형 적용 전 최신 모집요강 확인 필수"
-)
